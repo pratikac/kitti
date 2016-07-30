@@ -1,0 +1,46 @@
+package kitti;
+
+struct calib_t
+{
+    int64_t utime;
+    
+    double K_cam_left[9];
+    double K_cam_right[9];
+
+    double cam_left_imu[16];
+    double cam_right_imu[16];
+
+    double cam_left_velo[16];
+    double cam_right_velo[16];
+
+    double velo_imu[16];
+}
+
+struct image_t
+{
+    int64_t utime;
+    
+    int32_t width, height;
+
+    int32_t size;
+    byte data[size];
+}
+
+struct imu_t
+{
+    int64_t utime;
+
+    double pose[16];    // SE3 pose from GPS
+
+    double vel[3];                // body axis
+    double accel[3];              // body axis
+    double rotation_rate[3];      // body axis
+}
+
+struct pointcloud_t
+{
+    int64_t utime;
+
+    int32_t size;
+    float points[size][3];
+}
