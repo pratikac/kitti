@@ -1,11 +1,30 @@
-This is a data loader for KITTI. Download the KITTI dataset from
+Introduction
+============
 
-[KITTI 2012](http://www.cvlibs.net/download.php?file=data_stereo_flow.zip) and
-[KITTI 2015](http://www.cvlibs.net/download.php?file=data_scene_flow.zip).
+This is a data loader for KITTI. It publishes the RGB image data, velodyne pointclouds and IMU
+data at 10 Hz. We use LCM to publish these messages. Also, we publish the tracklet information
+as a set of tracked objects, their position and classes (both in velodyne coordinate frame and as
+bounding boxes in each camera) at 10 Hz.
 
-Run the loader as 
+Dependencies
+============
+
+You will need to install LCM to use this and export a variable ``JAVA_CLASSPATH`` that gives the
+location of ``lcm.jar`` on your computer. Either use ``lcm-gen`` to compile the LCM messages in
+kitti.lcm or use the included ``lcmtypes_kitti.jar`` file.
+
+You will also need to download the KITTI dataset.
+
+Usage
+=====
+
+1. Run
+
 ```
-local kitti = require 'kitti'
-
-local train, val, test = kitti.kitti12.split()
+    python kitti2lcm.py [dataset location] [drive name]
 ```
+
+2. Run ``./spy.sh`` which should open ``lcm-spy`` program that can show each message as it is being published.
+You can then run ``lcm-logger`` to log these messages as an LCM file and play them back later.
+
+
