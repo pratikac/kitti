@@ -4,16 +4,16 @@ struct calib_t
 {
     int64_t utime;
     
-    double K_cam_left[9];
-    double K_cam_right[9];
+    double K_cam_left[3][3];
+    double K_cam_right[3][3];
 
-    double cam_left_imu[16];
-    double cam_right_imu[16];
+    double cam_left_imu[4][4];
+    double cam_right_imu[4][4];
 
-    double cam_left_velo[16];
-    double cam_right_velo[16];
+    double cam_left_velo[4][4];
+    double cam_right_velo[4][4];
 
-    double velo_imu[16];
+    double velo_imu[4][4];
 }
 
 struct image_t
@@ -30,7 +30,7 @@ struct imu_t
 {
     int64_t utime;
 
-    double pose[16];    // SE3 pose from GPS
+    double pose[4][4];    // SE3 pose from GPS
 
     double vel[3];                // body axis
     double accel[3];              // body axis
@@ -43,4 +43,49 @@ struct pointcloud_t
 
     int32_t size;
     float points[size][3];
+}
+
+struct tracked_object_type_t
+{
+    const int8_t car = 0;
+    const int8_t van = 1;
+    const int8_t truck = 2;
+    const int8_t pedestrian = 3;
+    const int8_t person = 4;
+    const int8_t cyclist = 5;
+    const int8_t tram = 6;
+    const int8_t misc = 7;
+    const int8_t num_classes = 8;
+}
+
+struct tracked_object_t
+{
+    int64_t utime;
+
+    // -1 = unset, 1 = interp, 2 = labeled
+    int8_t state;
+
+    // a normalized probability vector of class posterior
+    // see tracked_object_type_t
+    double class[8];
+
+    // -1 = unset, 0 = visible, 1 = partly, 2 = fully
+    int8_t occluded;
+
+    // -1 = unset, 0 = visible, 1 = truncated, 2 = out of image, 3 = behind
+    int8_t truncated;
+    
+    double bbox_cam_left[2][2];
+    double bbox_cam_right[2][2];
+    
+    double pos_in_velo[3];
+    double quat_in_velo[4];
+}
+
+struct tracked_object_list_t
+{
+    int64_t utime;
+
+    int32_t size;
+    tracked_object_t objects[size];
 }
