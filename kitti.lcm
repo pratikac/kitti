@@ -60,14 +60,14 @@ struct tracked_object_type_t
 
 struct tracked_object_t
 {
-    int64_t utime;
-
+    double size[3];
+    
     // -1 = unset, 1 = interp, 2 = labeled
     int8_t state;
 
     // a normalized probability vector of class posterior
     // see tracked_object_type_t
-    double class[8];
+    double object_type[8];
 
     // -1 = unset, 0 = visible, 1 = partly, 2 = fully
     int8_t occluded;

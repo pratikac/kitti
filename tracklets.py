@@ -95,6 +95,8 @@ def parse_xml(fname):
                                     t.occ[frame_idx, 1] = int(pi.text)
                                 elif pi.tag == 'truncation':
                                     t.trunc[frame_idx] = int(pi.text)
+                                    if t.trunc[frame_idx] == 99:
+                                        t.trunc[frame_idx] = -1
                                 elif pi.tag == 'amt_occlusion':
                                     t.amt_occ[frame_idx, 0] = float(pi.text)
                                     has_amt = True
