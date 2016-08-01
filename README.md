@@ -21,7 +21,7 @@ Usage
 1. Run
 
 ```
-    python kitti2lcm.py [dataset location] [drive name]
+    python kitti2lcm.py [base_dir] [date] [drive name]
 ```
 
 2. Run ``./spy.sh`` which should open ``lcm-spy`` program that can show each message as it is being published.

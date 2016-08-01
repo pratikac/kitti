@@ -158,13 +158,13 @@ def load_tracklets():
 
             frame_objects[frame_idx].append(o)
 
-if not len(sys.argv) == 3:
-    print 'Usage: python kitti2lcm.py [date] [drive]'
+if not len(sys.argv) == 4:
+    print 'Usage: python kitti2lcm.py [base_dir] [date] [drive]'
     sys.exit(1)
 
-base_dir = '/local/kitti'
-date = sys.argv[1]
-drive = sys.argv[2]
+base_dir = sys.argv[1]
+date = sys.argv[2]
+drive = sys.argv[3]
 data_dir = os.path.join(base_dir, date, date + '_drive_' + drive + '_sync')
 
 N = len(os.listdir(os.path.join(data_dir, 'image_00/data')))
@@ -175,21 +175,22 @@ frame_objects = [[] for i in xrange(N)]
 dataset = pykitti.raw(base_dir, date, drive, frame_range)
 dataset.load_calib()
 dataset.load_timestamps()
-dataset.load_oxts()
+# dataset.load_oxts()
 dataset.load_rgb(format='cv2')
-dataset.load_velo()
+#dataset.load_velo()
 load_tracklets()
 
 print 'Loaded: drive %s' % (date + '_' + drive)
 
 lc = lcm.LCM()
 
-for i in xrange(N):
-    publish_calib(i)
-    publish_imu(i)
-    publish_image(i)
-    publish_velodyne(i)
-    publish_tracked_objects(i)
+for j in xrange(10):
+    for i in xrange(N):
+        # publish_calib(i)
+        # publish_imu(i)
+        publish_image(i)
+        # publish_velodyne(i)
+        # publish_tracked_objects(i)
 
-    print 'Published: [%05d]' % i
-    time.sleep(1)
+        print '[%05d]' % i
+        time.sleep(0.2)
