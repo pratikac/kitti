@@ -75,8 +75,8 @@ struct tracked_object_t
     // -1 = unset, 0 = visible, 1 = truncated, 2 = out of image, 3 = behind
     int8_t truncated;
     
-    double bbox_cam_left[2][2];
-    double bbox_cam_right[2][2];
+    int16_t bbox_cam_left[2][2];
+    int16_t bbox_cam_right[2][2];
     
     double pos_in_velo[3];
     double quat_in_velo[4];

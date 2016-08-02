@@ -18,8 +18,8 @@ class tracked_object_t(object):
         self.object_type = [ 0.0 for dim0 in range(8) ]
         self.occluded = 0
         self.truncated = 0
-        self.bbox_cam_left = [ [ 0.0 for dim1 in range(2) ] for dim0 in range(2) ]
-        self.bbox_cam_right = [ [ 0.0 for dim1 in range(2) ] for dim0 in range(2) ]
+        self.bbox_cam_left = [ [ 0 for dim1 in range(2) ] for dim0 in range(2) ]
+        self.bbox_cam_right = [ [ 0 for dim1 in range(2) ] for dim0 in range(2) ]
         self.pos_in_velo = [ 0.0 for dim0 in range(3) ]
         self.quat_in_velo = [ 0.0 for dim0 in range(4) ]
 
@@ -35,9 +35,9 @@ class tracked_object_t(object):
         buf.write(struct.pack('>8d', *self.object_type[:8]))
         buf.write(struct.pack(">bb", self.occluded, self.truncated))
         for i0 in range(2):
-            buf.write(struct.pack('>2d', *self.bbox_cam_left[i0][:2]))
+            buf.write(struct.pack('>2h', *self.bbox_cam_left[i0][:2]))
         for i0 in range(2):
-            buf.write(struct.pack('>2d', *self.bbox_cam_right[i0][:2]))
+            buf.write(struct.pack('>2h', *self.bbox_cam_right[i0][:2]))
         buf.write(struct.pack('>3d', *self.pos_in_velo[:3]))
         buf.write(struct.pack('>4d', *self.quat_in_velo[:4]))
 
@@ -59,10 +59,10 @@ class tracked_object_t(object):
         self.occluded, self.truncated = struct.unpack(">bb", buf.read(2))
         self.bbox_cam_left = []
         for i0 in range(2):
-            self.bbox_cam_left.append(struct.unpack('>2d', buf.read(16)))
+            self.bbox_cam_left.append(struct.unpack('>2h', buf.read(4)))
         self.bbox_cam_right = []
         for i0 in range(2):
-            self.bbox_cam_right.append(struct.unpack('>2d', buf.read(16)))
+            self.bbox_cam_right.append(struct.unpack('>2h', buf.read(4)))
         self.pos_in_velo = struct.unpack('>3d', buf.read(24))
         self.quat_in_velo = struct.unpack('>4d', buf.read(32))
         return self
@@ -71,7 +71,7 @@ class tracked_object_t(object):
     _hash = None
     def _get_hash_recursive(parents):
         if tracked_object_t in parents: return 0
-        tmphash = (0x936fef2565c13e3a) & 0xffffffffffffffff
+        tmphash = (0xba1c0bd2b4cf98dd) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff)  + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

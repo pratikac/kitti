@@ -19,11 +19,9 @@ Usage
 =====
 
 1. Run
-
 ```
     python kitti2lcm.py [base_dir] [date] [drive name]
 ```
-
 2. Run ``./spy.sh`` which should open ``lcm-spy`` program that can show each message as it is being published.
 You can then run ``lcm-logger`` to log these messages as an LCM file and play them back later.
 

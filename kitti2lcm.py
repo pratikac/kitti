@@ -190,7 +190,7 @@ for j in xrange(10):
         # publish_imu(i)
         publish_image(i)
         # publish_velodyne(i)
-        # publish_tracked_objects(i)
+        publish_tracked_objects(i)
 
         print '[%05d]' % i
-        time.sleep(0.2)
+        time.sleep(0.1)
