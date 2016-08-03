@@ -26,8 +26,16 @@ object_type_to_idx = {'Car': 0,
                       'Tram' : 6,
                       'Misc' : 7
                     }
+win = cv2.namedWindow("debug")
 
-def project_velo_to_cam(X, K_cam_velo, K_cam):
+def project_velo_to_cam(X, K_cam_velo):
+    assert X.shape[0] == 3, 'X.shape[0]: %d' %X.shape[0]
+    assert K_cam_velo.shape[0] == 4, K
+    tmp = np.vstack((X, np.ones(X.shape[1])))
+    x_in_cam = np.dot(K_cam_velo, tmp)
+    return x_in_cam[:3]
+
+def project_velo_to_img(X, K_cam_velo, K_cam, crop_sz = (1242,375)):
     assert X.shape[0] == 3, 'X.shape[0]: %d' %X.shape[0]
     assert K_cam_velo.shape[0] == 4, K
     tmp = np.vstack((X, np.ones(X.shape[1])))
@@ -35,7 +43,42 @@ def project_velo_to_cam(X, K_cam_velo, K_cam):
     x_in_img = np.dot(K_cam, x_in_cam[:3])
     x_in_img[0] /= x_in_img[2]
     x_in_img[1] /= x_in_img[2]
-    return x_in_img[:2]
+
+    x_in_img = x_in_img[:2]
+
+    tl, br = np.array([0, 0]), np.array(crop_sz)
+    idx = np.all(np.logical_and(tl <= x_in_img.T, x_in_img.T <= br), axis=1)
+    x_in_img = x_in_img.T[idx]
+    x_in_img = x_in_img.T
+    return x_in_img.astype(int)
+
+def create_depth_image(x, T, K, sz = (1242,375)):
+    tmp = np.vstack((x, np.ones(x.shape[1])))
+    x_in_cam = np.dot(T, tmp)
+    depth = np.linalg.norm(x_in_cam, axis=0)
+    
+    x_in_img = np.dot(K, x_in_cam[:3])
+    x_in_img[0] /= x_in_img[2]
+    x_in_img[1] /= x_in_img[2]
+    x_in_img = x_in_img[:2]
+
+    tl, br = np.array([0, 0]), np.array(sz)
+    max_depth = 50.0
+    idx1 = np.all(np.logical_and(tl <= x_in_img.T,
+                                x_in_img.T <= br), axis=1)
+    idx2 = np.logical_and(depth <= max_depth, depth >= 0.25)
+    idx = idx1*idx2
+    
+    x_in_img = x_in_img.T[idx].astype(int)
+    x_in_img = x_in_img.T
+    depth = depth[idx]
+
+    img = np.zeros((375, 1242), dtype= np.uint8)
+    invd = 1/depth
+    ninvd = (255*invd/invd.max()).astype(int)
+    img[x_in_img[1], x_in_img[0]] = ninvd
+    
+    return img
 
 def bbox_from_corners(x):
     x1, x2 = int(np.min(x[0])), int(np.max(x[0]))
@@ -97,6 +140,15 @@ def publish_velodyne(idx):
     msg.points = v[:N].tolist()
     lc.publish('VELODYNE', msg.encode())
 
+    # publish depth image in cam_left
+    msg = image_t()
+    msg.utime = convert_timestamp(dataset.timestamps[idx])
+    
+    img = create_depth_image(v.T[:3], dataset.calib.T_cam2_velo, dataset.calib.K_cam2)
+
+    cv2.imshow("debug", img)
+    cv2.waitKey(10)
+
 def publish_tracked_objects(idx):
     msg = tracked_object_list_t()
     msg.utime = convert_timestamp(dataset.timestamps[idx])
@@ -135,9 +187,9 @@ def load_tracklets():
                 [        0.0,          0.0, 1.0]])
 
             corners_in_velo = np.dot(R, box) + np.tile(trans, (8,1)).T
-            corners_in_cam_left = project_velo_to_cam(corners_in_velo,
+            corners_in_cam_left = project_velo_to_img(corners_in_velo,
                                     dataset.calib.T_cam2_velo, dataset.calib.K_cam2)
-            corners_in_cam_right = project_velo_to_cam(corners_in_velo,
+            corners_in_cam_right = project_velo_to_img(corners_in_velo,
                                     dataset.calib.T_cam3_velo, dataset.calib.K_cam3)
 
             # build object
@@ -175,10 +227,10 @@ frame_objects = [[] for i in xrange(N)]
 dataset = pykitti.raw(base_dir, date, drive, frame_range)
 dataset.load_calib()
 dataset.load_timestamps()
-# dataset.load_oxts()
-dataset.load_rgb(format='cv2')
-#dataset.load_velo()
-load_tracklets()
+#dataset.load_oxts()
+#dataset.load_rgb(format='cv2')
+dataset.load_velo()
+# load_tracklets()
 
 print 'Loaded: drive %s' % (date + '_' + drive)
 
@@ -188,9 +240,9 @@ for j in xrange(10):
     for i in xrange(N):
         # publish_calib(i)
         # publish_imu(i)
-        publish_image(i)
-        # publish_velodyne(i)
-        publish_tracked_objects(i)
+        #publish_image(i)
+        publish_velodyne(i)
+        # publish_tracked_objects(i)
 
         print '[%05d]' % i
         time.sleep(0.1)

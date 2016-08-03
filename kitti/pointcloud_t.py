@@ -26,7 +26,7 @@ class pointcloud_t(object):
     def _encode_one(self, buf):
         buf.write(struct.pack(">qi", self.utime, self.size))
         for i0 in range(self.size):
-            buf.write(struct.pack('>3f', *self.points[i0][:3]))
+            buf.write(struct.pack('>4f', *self.points[i0][:4]))
 
     def decode(data):
         if hasattr(data, 'read'):
@@ -43,14 +43,14 @@ class pointcloud_t(object):
         self.utime, self.size = struct.unpack(">qi", buf.read(12))
         self.points = []
         for i0 in range(self.size):
-            self.points.append(struct.unpack('>3f', buf.read(12)))
+            self.points.append(struct.unpack('>4f', buf.read(16)))
         return self
     _decode_one = staticmethod(_decode_one)
 
     _hash = None
     def _get_hash_recursive(parents):
         if pointcloud_t in parents: return 0
-        tmphash = (0x668519cd924557) & 0xffffffffffffffff
+        tmphash = (0x668519cd924558) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff)  + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

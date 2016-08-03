@@ -1,1 +1,1 @@
-java -cp "$JAVA_CLASSPATH:./*" lcm.spy.Spy $*
+java -cp "$LCM_JAR_PATH:./*" lcm.spy.Spy $*

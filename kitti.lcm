@@ -42,7 +42,7 @@ struct pointcloud_t
     int64_t utime;
 
     int32_t size;
-    float points[size][3];
+    float points[size][4];
 }
 
 struct tracked_object_type_t
