@@ -9,6 +9,11 @@ import numpy as np
 import sys, os, pdb, glob, time, datetime, readline
 import cv2
 
+import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+plt.ion()
+
 import pykitti
 from tracklets import *
 
@@ -27,6 +32,8 @@ object_type_to_idx = {'Car': 0,
                       'Misc' : 7
                     }
 win = cv2.namedWindow("debug")
+
+depth_img = np.zeros((375, 1242))
 
 def project_velo_to_cam(X, K_cam_velo):
     assert X.shape[0] == 3, 'X.shape[0]: %d' %X.shape[0]
@@ -53,6 +60,7 @@ def project_velo_to_img(X, K_cam_velo, K_cam, crop_sz = (1242,375)):
     return x_in_img.astype(int)
 
 def create_depth_image(x, T, K, sz = (1242,375)):
+    global depth_img
     tmp = np.vstack((x, np.ones(x.shape[1])))
     x_in_cam = np.dot(T, tmp)
     depth = np.linalg.norm(x_in_cam, axis=0)
@@ -63,7 +71,7 @@ def create_depth_image(x, T, K, sz = (1242,375)):
     x_in_img = x_in_img[:2]
 
     tl, br = np.array([0, 0]), np.array(sz)
-    max_depth = 75.0
+    max_depth = 50.0
     idx1 = np.all(np.logical_and(tl <= x_in_img.T,
                                 x_in_img.T <= br), axis=1)
     idx2 = np.logical_and(depth <= max_depth, depth >= 0.)
@@ -73,11 +81,7 @@ def create_depth_image(x, T, K, sz = (1242,375)):
     x_in_img = x_in_img.T
     depth = depth[idx]
 
-    img = np.zeros((375, 1242))
-    #invd = 255*(80/depth)
-    img[x_in_img[1], x_in_img[0]] = depth
-
-    return img
+    depth_img[x_in_img[1], x_in_img[0]] = 1/depth
 
 def bbox_from_corners(x):
     x1, x2 = int(np.min(x[0])), int(np.max(x[0]))
@@ -129,6 +133,21 @@ def publish_image(idx):
     helper("CAM_LEFT", dataset.rgb[idx].left)
     helper("CAM_RIGHT", dataset.rgb[idx].right)
 
+def publish_depth_image(idx):
+    global depth_img
+    
+    D = 5
+    minidx, maxidx = max(idx-D/2, 0), min(idx+D/2, frame_range[-1])
+
+    depth_img = np.zeros((375, 1242))
+    for i in xrange(minidx, maxidx):
+        x = dataset.velo[i]
+        create_depth_image(x.T[:3], dataset.calib.T_cam2_velo, dataset.calib.K_cam2)
+  
+    pdb.set_trace()
+    plt.imshow(depth_img, cmap='gray', interpolation='bilinear')
+    plt.pause(0.0001)
+
 def publish_velodyne(idx):
     msg = pointcloud_t()
     msg.utime = convert_timestamp(dataset.timestamps[idx])
@@ -138,15 +157,6 @@ def publish_velodyne(idx):
     msg.size = N
     msg.points = v[:N].tolist()
     lc.publish('VELODYNE', msg.encode())
-
-    # publish depth image in cam_left
-    msg = image_t()
-    msg.utime = convert_timestamp(dataset.timestamps[idx])
-    
-    img = create_depth_image(v.T[:3], dataset.calib.T_cam2_velo, dataset.calib.K_cam2)
-
-    cv2.imshow("debug", img)
-    cv2.waitKey(10)
 
 def publish_tracked_objects(idx):
     msg = tracked_object_list_t()
@@ -242,6 +252,8 @@ for j in xrange(10):
         #publish_image(i)
         publish_velodyne(i)
         # publish_tracked_objects(i)
+
+        publish_depth_image(i)
 
         print '[%05d]' % i
         time.sleep(0.1)
