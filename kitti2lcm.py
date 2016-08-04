@@ -63,21 +63,20 @@ def create_depth_image(x, T, K, sz = (1242,375)):
     x_in_img = x_in_img[:2]
 
     tl, br = np.array([0, 0]), np.array(sz)
-    max_depth = 50.0
+    max_depth = 75.0
     idx1 = np.all(np.logical_and(tl <= x_in_img.T,
                                 x_in_img.T <= br), axis=1)
-    idx2 = np.logical_and(depth <= max_depth, depth >= 0.25)
+    idx2 = np.logical_and(depth <= max_depth, depth >= 0.)
     idx = idx1*idx2
     
     x_in_img = x_in_img.T[idx].astype(int)
     x_in_img = x_in_img.T
     depth = depth[idx]
 
-    img = np.zeros((375, 1242), dtype= np.uint8)
-    invd = 1/depth
-    ninvd = (255*invd/invd.max()).astype(int)
-    img[x_in_img[1], x_in_img[0]] = ninvd
-    
+    img = np.zeros((375, 1242))
+    #invd = 255*(80/depth)
+    img[x_in_img[1], x_in_img[0]] = depth
+
     return img
 
 def bbox_from_corners(x):
