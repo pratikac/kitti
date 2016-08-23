@@ -81,7 +81,7 @@ def create_depth_image(x, T, K, sz = (1242,375)):
     x_in_img = x_in_img.T
     depth = depth[idx]
 
-    depth_img[x_in_img[1], x_in_img[0]] = 1/depth
+    depth_img[x_in_img[1], x_in_img[0]] = depth
 
 def bbox_from_corners(x):
     x1, x2 = int(np.min(x[0])), int(np.max(x[0]))
@@ -105,7 +105,7 @@ def publish_calib(idx):
     msg.cam_right_velo = dataset.calib.T_cam3_velo.tolist()
 
     msg.velo_imu = dataset.calib.T_velo_imu.tolist()
-
+    
     lc.publish('CALIB', msg.encode())
 
 def publish_imu(idx):
@@ -146,6 +146,16 @@ def publish_depth_image(idx):
   
     pdb.set_trace()
     plt.imshow(depth_img, cmap='gray', interpolation='bilinear')
+    plt.pause(0.0001)
+
+def publish_heatmap(idx):
+    x,y = dataset.velo[idx].T[0], dataset.velo[idx].T[1]
+    h,xe,ye = np.histogram2d(x,y,bins=50)
+    extent = [xe[0], xe[-1], ye[0], ye[-1]]
+
+    plt.figure(1)
+    plt.clf()
+    plt.imshow(h,extent=extent)
     plt.pause(0.0001)
 
 def publish_velodyne(idx):
@@ -236,10 +246,10 @@ frame_objects = [[] for i in xrange(N)]
 dataset = pykitti.raw(base_dir, date, drive, frame_range)
 dataset.load_calib()
 dataset.load_timestamps()
-#dataset.load_oxts()
-#dataset.load_rgb(format='cv2')
+dataset.load_oxts()
+dataset.load_rgb(format='cv2')
 dataset.load_velo()
-# load_tracklets()
+#load_tracklets()
 
 print 'Loaded: drive %s' % (date + '_' + drive)
 
@@ -247,13 +257,14 @@ lc = lcm.LCM()
 
 for j in xrange(10):
     for i in xrange(N):
-        # publish_calib(i)
-        # publish_imu(i)
-        #publish_image(i)
+        publish_calib(i)
+        publish_imu(i)
+        publish_image(i)
         publish_velodyne(i)
-        # publish_tracked_objects(i)
+        #publish_tracked_objects(i)
 
-        publish_depth_image(i)
+        #publish_depth_image(i)
+        #publish_heatmap(i)
 
         print '[%05d]' % i
         time.sleep(0.1)
