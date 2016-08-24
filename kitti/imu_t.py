@@ -14,7 +14,7 @@ class imu_t(object):
 
     def __init__(self):
         self.utime = 0
-        self.pose = [ [ 0.0 for dim1 in range(4) ] for dim0 in range(4) ]
+        self.pose = [ 0.0 for dim0 in range(16) ]
         self.vel = [ 0.0 for dim0 in range(3) ]
         self.accel = [ 0.0 for dim0 in range(3) ]
         self.rotation_rate = [ 0.0 for dim0 in range(3) ]
@@ -27,8 +27,7 @@ class imu_t(object):
 
     def _encode_one(self, buf):
         buf.write(struct.pack(">q", self.utime))
-        for i0 in range(4):
-            buf.write(struct.pack('>4d', *self.pose[i0][:4]))
+        buf.write(struct.pack('>16d', *self.pose[:16]))
         buf.write(struct.pack('>3d', *self.vel[:3]))
         buf.write(struct.pack('>3d', *self.accel[:3]))
         buf.write(struct.pack('>3d', *self.rotation_rate[:3]))
@@ -46,9 +45,7 @@ class imu_t(object):
     def _decode_one(buf):
         self = imu_t()
         self.utime = struct.unpack(">q", buf.read(8))[0]
-        self.pose = []
-        for i0 in range(4):
-            self.pose.append(struct.unpack('>4d', buf.read(32)))
+        self.pose = struct.unpack('>16d', buf.read(128))
         self.vel = struct.unpack('>3d', buf.read(24))
         self.accel = struct.unpack('>3d', buf.read(24))
         self.rotation_rate = struct.unpack('>3d', buf.read(24))
@@ -58,7 +55,7 @@ class imu_t(object):
     _hash = None
     def _get_hash_recursive(parents):
         if imu_t in parents: return 0
-        tmphash = (0x556ce98d900aa75f) & 0xffffffffffffffff
+        tmphash = (0x41bc9a46663c44a4) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff)  + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

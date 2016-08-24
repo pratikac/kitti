@@ -84,6 +84,9 @@ def create_depth_image(x, T, K, sz = (1242,375)):
     depth_img[x_in_img[1], x_in_img[0]] = depth
 
 def bbox_from_corners(x):
+    if x.shape[1] == 0:
+        return [[0,0], [0,0]]
+
     x1, x2 = int(np.min(x[0])), int(np.max(x[0]))
     y1, y2 = int(np.min(x[1])), int(np.max(x[1]))
     return [[x1, y1], [x2, y2]] 
@@ -95,16 +98,16 @@ def publish_calib(idx):
     msg = calib_t()
     msg.utime = convert_timestamp(dataset.timestamps[idx])
 
-    msg.K_cam_left = dataset.calib.K_cam2.tolist()
-    msg.K_cam_right = dataset.calib.K_cam3.tolist()
+    msg.K_cam_left = dataset.calib.K_cam2.flatten().tolist()
+    msg.K_cam_right = dataset.calib.K_cam3.flatten().tolist()
 
-    msg.cam_left_imu = dataset.calib.T_cam2_imu.tolist()
-    msg.cam_right_imu = dataset.calib.T_cam3_imu.tolist()
+    msg.cam_left_imu = dataset.calib.T_cam2_imu.flatten().tolist()
+    msg.cam_right_imu = dataset.calib.T_cam3_imu.flatten().tolist()
 
-    msg.cam_left_velo = dataset.calib.T_cam2_velo.tolist()
-    msg.cam_right_velo = dataset.calib.T_cam3_velo.tolist()
+    msg.cam_left_velo = dataset.calib.T_cam2_velo.flatten().tolist()
+    msg.cam_right_velo = dataset.calib.T_cam3_velo.flatten().tolist()
 
-    msg.velo_imu = dataset.calib.T_velo_imu.tolist()
+    msg.velo_imu = dataset.calib.T_velo_imu.flatten().tolist()
     
     lc.publish('CALIB', msg.encode())
 
@@ -117,7 +120,7 @@ def publish_imu(idx):
     msg.vel = [o.packet.vf, o.packet.vl, o.packet.vu]
     msg.accel = [o.packet.ax, o.packet.ay, o.packet.az]
     msg.rotation_rate = [o.packet.wx, o.packet.wy, o.packet.wz]
-    msg.pose = o.T_w_imu.tolist()
+    msg.pose = o.T_w_imu.flatten().tolist()
     lc.publish('IMU', msg.encode())
 
 def publish_image(idx):
@@ -186,7 +189,7 @@ def load_tracklets():
 
     for i in range(len(tracklets)):
         t = tracklets[i]
-        print 'tracklet %3d' % i 
+        #print 'tracklet %3d' % i 
 
         h, w, l = t.size
         box = np.array([
@@ -247,9 +250,9 @@ dataset = pykitti.raw(base_dir, date, drive, frame_range)
 dataset.load_calib()
 dataset.load_timestamps()
 dataset.load_oxts()
-dataset.load_rgb(format='cv2')
-dataset.load_velo()
-#load_tracklets()
+#dataset.load_rgb(format='cv2')
+#dataset.load_velo()
+load_tracklets()
 
 print 'Loaded: drive %s' % (date + '_' + drive)
 
@@ -259,9 +262,9 @@ for j in xrange(10):
     for i in xrange(N):
         publish_calib(i)
         publish_imu(i)
-        publish_image(i)
-        publish_velodyne(i)
-        #publish_tracked_objects(i)
+        #publish_image(i)
+        #publish_velodyne(i)
+        publish_tracked_objects(i)
 
         #publish_depth_image(i)
         #publish_heatmap(i)
